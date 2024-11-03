@@ -1,39 +1,40 @@
 {
     "name": "push-emulator-tester",
-    "version": "1.0.0", 
+    "version": "1.0.0",
     "description": "Push Emulator Tester for DGH API",
     "main": "index.js",
     "scripts": {
-      "start": "react-scripts start",
-      "build": "react-scripts build", 
-      "test": "react-scripts test",
-      "eject": "react-scripts eject"
+        "start": "react-scripts start",
+        "build": "react-scripts build",
+        "test": "react-scripts test",
+        "eject": "react-scripts eject"
     },
     "devDependencies": {
-      "@babel/plugin-proposal-private-property-in-object": "^7.18.6"
+        "@babel/plugin-proposal-private-property-in-object": "^7.18.6"
     },
     "dependencies": {
-      "@emotion/react": "^11.0.0",
-      "@emotion/styled": "^11.0.0",
-      "@mui/material": "^5.0.0",
-      "@mui/icons-material": "^5.0.0",
-      "axios": "^1.4.0",
-      "react": "^18.2.0",
-      "react-dom": "^18.2.0",
-      "react-router-dom": "^6.14.0",
-      "react-scripts": "5.0.1",
-      "uuid": "^9.0.0"
+        "@emotion/react": "^11.0.0",
+        "@emotion/styled": "^11.0.0",
+        "@mui/icons-material": "^5.0.0",
+        "@mui/material": "^5.0.0",
+        "axios": "^1.4.0",
+        "query-string": "^9.1.1",
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0",
+        "react-router-dom": "^6.14.0",
+        "react-scripts": "5.0.1",
+        "uuid": "^9.0.0"
     },
     "browserslist": {
-      "production": [
-        ">0.2%",
-        "not dead",
-        "not op_mini all"
-      ],
-      "development": [
-        "last 1 chrome version",
-        "last 1 firefox version",
-        "last 1 safari version"
-      ]
+        "production": [
+            ">0.2%",
+            "not dead",
+            "not op_mini all"
+        ],
+        "development": [
+            "last 1 chrome version",
+            "last 1 firefox version",
+            "last 1 safari version"
+        ]
     }
 }
