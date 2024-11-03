@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import DGHDynamicMain from './components/dynamic/DGHDynamicMain';
 import DGHStaticMain from './components/static/DGHStaticMain';
+import './index.css';
 
 const App = () => {
     return (
