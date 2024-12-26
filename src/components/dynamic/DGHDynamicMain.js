@@ -3,7 +3,7 @@ import { Container, Typography, TextField, Button, Alert, Paper, Box, Stack, Sel
 import { Link } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import Ajv from 'ajv';
-import IframeWrapper from '../components/IframeWrapper'; // Adjust path as needed
+import HistoryWrapper from '../components/HistoryWrapper'; // Adjust path as needed
 
 const ajv = new Ajv({ allErrors: true, verbose: true });
 const dghResponseSchema = {
@@ -176,7 +176,7 @@ const DGHDynamicMain = () => {
 
     return (
         <Container>
-            <IframeWrapper iframeUrl={iframeUrl} onClose={() => setIframeUrl('')} />
+            <HistoryWrapper iframeUrl={iframeUrl} onClose={() => setIframeUrl('')} />
             <Box display="flex" justifyContent="space-between" alignItems="center" marginBottom="20px">
                 <Typography variant="h4" gutterBottom>DGH Pusher / Dynamic Approach</Typography>
                 <Box>
