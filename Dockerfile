@@ -7,7 +7,6 @@ WORKDIR /app
 # Install app dependencies
 COPY package*.json ./
 RUN npm install
-RUN npm install -g concurrently # Optional, can be removed since it's in package.json
 
 # Copy app source code
 COPY . .
@@ -21,4 +20,4 @@ EXPOSE 3000
 EXPOSE 5000
 
 # Command to run both proxy and frontend
-CMD ["concurrently", "\"node proxyServer.js\"", "\"npm start\""]
+CMD ["npm", "start"]
