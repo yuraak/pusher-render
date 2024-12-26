@@ -4,10 +4,14 @@
     "description": "Push Emulator Tester for DGH API",
     "main": "index.js",
     "scripts": {
-        "start": "concurrently \"node proxyServer.js\" \"react-scripts start\"",
+        "start": "concurrently \"PORT=3000 react-scripts start\" \"PROXY_PORT=5000 node proxyServer.js\"",
         "build": "react-scripts build",
         "test": "react-scripts test",
         "eject": "react-scripts eject"
+    },
+    "engines": {
+        "node": ">=18",
+        "npm": ">=9"
     },
     "dependencies": {
         "@emotion/react": "^11.0.0",
@@ -26,19 +30,8 @@
         "http-proxy-middleware": "^2.0.6",
         "concurrently": "^7.6.0"
     },
-    "engines": {
-        "node": ">=18"
-    },
     "browserslist": {
-        "production": [
-            ">0.2%",
-            "not dead",
-            "not op_mini all"
-        ],
-        "development": [
-            "last 1 chrome version",
-            "last 1 firefox version",
-            "last 1 safari version"
-        ]
+        "production": [">0.2%", "not dead", "not op_mini all"],
+        "development": ["last 1 chrome version", "last 1 firefox version", "last 1 safari version"]
     }
 }
