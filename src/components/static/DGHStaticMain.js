@@ -1,76 +1,86 @@
-import React, { useState, useEffect } from 'react';
-import { Stack, Container, Typography, TextField, Checkbox, FormControlLabel, Paper, Box, Button, Grid } from '@mui/material';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Container, Typography, TextField, Checkbox, FormControlLabel, Paper, Box, Stack, Button, Grid } from '@mui/material';
 import { Link } from 'react-router-dom';
-import queryString from 'query-string';
 
 const DGHStaticMain = () => {
     const [baseUrl, setBaseUrl] = useState('');
-    const [selectedParams, setSelectedParams] = useState({
+    const [selectedParameters, setSelectedParameters] = useState({
         playerId: false,
         skinId: false,
         gameId: false,
         gameCycleId: false,
         gameCycleFinishDateTime: false,
-        localeCode: false,
+        localeCode: false
     });
-    const [paramValues, setParamValues] = useState({
+    const [parameterValues, setParameterValues] = useState({
         playerId: { name: '', value: '' },
         skinId: { name: '', value: '' },
         gameId: { name: '', value: '' },
         gameCycleId: { name: '', value: '' },
         gameCycleFinishDateTime: { name: '', value: '' },
-        localeCode: { name: '', value: '' },
+        localeCode: { name: '', value: '' }
     });
     const [urlPreview, setUrlPreview] = useState('');
     const [history, setHistory] = useState([]);
 
-    const handleBaseUrlChange = (e) => {
-        setBaseUrl(e.target.value);
-    };
+    useEffect(() => {
+        document.title = 'DGH PUSHER / static'; // Set tab title
+    }, []);
+
+    const handleBaseUrlChange = (e) => setBaseUrl(e.target.value);
 
     const handleCheckboxChange = (e) => {
-        const { name, checked } = e.target;
-        setSelectedParams((prev) => ({ ...prev, [name]: checked }));
+        setSelectedParameters({
+            ...selectedParameters,
+            [e.target.name]: e.target.checked
+        });
     };
 
-    const handleParamChange = (e, param, field) => {
-        const { value } = e.target;
-        setParamValues((prev) => ({
-            ...prev,
-            [param]: {
-                ...prev[param],
-                [field]: value,
-            },
-        }));
-    };
-
-    useEffect(() => {
-        const queryParams = {};
-        Object.keys(selectedParams).forEach((param) => {
-            if (selectedParams[param]) {
-                const paramName = paramValues[param].name || param;
-                const paramValue = paramValues[param].value;
-                queryParams[paramName] = paramValue;
+    const handleParameterChange = (e, key, type) => {
+        setParameterValues({
+            ...parameterValues,
+            [key]: {
+                ...parameterValues[key],
+                [type]: e.target.value
             }
         });
+    };
 
-        const queryStringified = queryString.stringify(queryParams);
-        const completeUrl = baseUrl.includes('?')
-            ? `${baseUrl}&${queryStringified}`
-            : `${baseUrl}?${queryStringified}`;
-        setUrlPreview(completeUrl);
-    }, [baseUrl, selectedParams, paramValues]);
+    const updateUrlPreview = useCallback(() => {
+        const [urlWithoutQuery, query] = baseUrl.split('?');
+        const existingParams = new URLSearchParams(query);
+        const params = new URLSearchParams(existingParams);
 
-    const openUrlInIframe = () => {
-        if (urlPreview) {
-            window.open(urlPreview, '_blank', 'noopener,noreferrer');
-            setHistory((prev) => [urlPreview, ...prev.slice(0, 9)]);
+        for (const key in selectedParameters) {
+            if (selectedParameters[key]) {
+                const name = parameterValues[key].name || key;
+                const value = parameterValues[key].value || '';
+                params.set(name, value);
+            }
         }
+
+        const queryStringified = params.toString();
+        const finalUrl = queryStringified ? `${urlWithoutQuery}?${queryStringified}` : urlWithoutQuery;
+        setUrlPreview(finalUrl);
+    }, [baseUrl, selectedParameters, parameterValues]);
+
+    useEffect(() => {
+        updateUrlPreview();
+    }, [updateUrlPreview]);
+
+    const handleOpenIframe = () => {
+        const iframe = document.createElement('iframe');
+        iframe.src = urlPreview;
+        iframe.style.width = '100%';
+        iframe.style.height = '600px';
+        iframe.style.border = 'none';
+        const iframeContainer = document.getElementById('iframe-container');
+        iframeContainer.innerHTML = '';
+        iframeContainer.appendChild(iframe);
+        setHistory((prev) => [urlPreview, ...prev.slice(0, 9)]);
     };
 
-    const clearHistory = () => {
-        setHistory([]);
-    };
+    const clearHistory = () => setHistory([]);
 
     return (
         <Container>
@@ -87,62 +97,70 @@ const DGHStaticMain = () => {
             </Box>
             <TextField
                 label="Base URL"
-                value={baseUrl}
+                name="baseUrl"
                 onChange={handleBaseUrlChange}
+                value={baseUrl}
                 variant="outlined"
                 fullWidth
+                InputLabelProps={{ shrink: true }}
                 style={{ marginBottom: '20px' }}
             />
-            <Grid container spacing={2}>
-                {Object.keys(selectedParams).map((param) => (
-                    <React.Fragment key={param}>
-                        <Grid item xs={12}>
-                            <FormControlLabel
-                                control={
-                                    <Checkbox
-                                        checked={selectedParams[param]}
-                                        onChange={handleCheckboxChange}
-                                        name={param}
-                                    />
-                                }
-                                label={param.replace(/([A-Z])/g, ' $1').toUpperCase()}
+            <Box style={{ marginBottom: '20px' }}>
+                {Object.keys(selectedParameters).map((param) => (
+                    <FormControlLabel
+                        key={param}
+                        control={
+                            <Checkbox
+                                checked={selectedParameters[param]}
+                                onChange={handleCheckboxChange}
+                                name={param}
+                                color="primary"
                             />
-                        </Grid>
-                        {selectedParams[param] && (
-                            <>
-                                <Grid item xs={6}>
-                                    <TextField
-                                        label={`Parameter Name for ${param}`}
-                                        value={paramValues[param].name}
-                                        onChange={(e) => handleParamChange(e, param, 'name')}
-                                        variant="outlined"
-                                        fullWidth
-                                    />
-                                </Grid>
-                                <Grid item xs={6}>
-                                    <TextField
-                                        label={`Value for ${param}`}
-                                        value={paramValues[param].value}
-                                        onChange={(e) => handleParamChange(e, param, 'value')}
-                                        variant="outlined"
-                                        fullWidth
-                                    />
-                                </Grid>
-                            </>
-                        )}
-                    </React.Fragment>
+                        }
+                        label={param.replace(/([A-Z])/g, ' $1').trim()}  // Format label for readability
+                    />
+                ))}
+            </Box>
+            <Grid container spacing={2} style={{ marginBottom: '20px' }}>
+                {Object.keys(selectedParameters).map((key) => (
+                    selectedParameters[key] && (
+                        <React.Fragment key={key}>
+                            <Grid item xs={12} md={6}>
+                                <TextField
+                                    label={`Parameter Name for ${key}`}
+                                    value={parameterValues[key].name}
+                                    onChange={(e) => handleParameterChange(e, key, 'name')}
+                                    variant="outlined"
+                                    fullWidth
+                                    style={{ marginBottom: '10px' }}
+                                />
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                                <TextField
+                                    label={`Value for ${key}`}
+                                    value={parameterValues[key].value}
+                                    onChange={(e) => handleParameterChange(e, key, 'value')}
+                                    variant="outlined"
+                                    fullWidth
+                                    style={{ marginBottom: '10px' }}
+                                />
+                            </Grid>
+                        </React.Fragment>
+                    )
                 ))}
             </Grid>
-            <Paper elevation={3} style={{ padding: '20px', marginTop: '20px', position: 'relative' }}>
+            <Paper elevation={3} style={{ padding: '20px', marginBottom: '20px', position: 'relative' }}>
                 <Box position="absolute" top="-8px" left="10px" bgcolor="white" px="5px">
-                    <Typography variant="subtitle1" style={{ marginBottom: '-10px', fontWeight: 500, color: 'rgba(0, 0, 0, 0.6)' }}>
+                    <Typography variant="subtitle1" style={{ fontWeight: 500, color: 'rgba(0, 0, 0, 0.6)' }}>
                         URL Preview
                     </Typography>
                 </Box>
-                <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>{urlPreview}</pre>
+                <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
+                    {urlPreview}
+                </pre>
             </Paper>
-            <Stack direction="row" spacing={2} style={{ marginTop: '20px' }}>
-                <Button variant="contained" color="primary" onClick={openUrlInIframe}>
+            <Stack direction="row" spacing={2}>
+                <Button variant="contained" color="primary" onClick={handleOpenIframe}>
                     Open URL in Iframe
                 </Button>
             </Stack>
@@ -153,11 +171,18 @@ const DGHStaticMain = () => {
                 </Button>
             </Box>
             {history.map((url, index) => (
-                <Paper elevation={3} key={index} style={{ padding: '10px', marginTop: '10px' }}>
-                    <Typography variant="subtitle2">{`URL ${index + 1}`}</Typography>
-                    <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>{url}</pre>
+                <Paper elevation={3} key={index} style={{ padding: '20px', marginTop: '20px', position: 'relative' }}>
+                    <Box position="absolute" top="-8px" left="10px" bgcolor="white" px="5px">
+                        <Typography variant="subtitle1" style={{ fontWeight: 500, color: 'rgba(0, 0, 0, 0.6)' }}>
+                            {index === 0 ? 'Latest' : `URL ${index + 1}`}
+                        </Typography>
+                    </Box>
+                    <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
+                        {url}
+                    </pre>
                 </Paper>
             ))}
+            <div id="iframe-container" style={{ marginTop: '20px' }}></div>
         </Container>
     );
 };
