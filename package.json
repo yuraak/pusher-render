@@ -4,13 +4,10 @@
     "description": "Push Emulator Tester for DGH API",
     "main": "index.js",
     "scripts": {
-        "start": "concurrently \"node src/components/proxyServer.js\" \"react-scripts start\"",
+        "start": "concurrently \"node proxyServer.js\" \"react-scripts start\"",
         "build": "react-scripts build",
         "test": "react-scripts test",
         "eject": "react-scripts eject"
-    },
-    "devDependencies": {
-        "@babel/plugin-proposal-private-property-in-object": "^7.18.6"
     },
     "dependencies": {
         "@emotion/react": "^11.0.0",
@@ -26,7 +23,11 @@
         "uuid": "^9.0.0",
         "cors": "^2.8.5",
         "express": "^4.18.2",
+        "http-proxy-middleware": "^2.0.6",
         "concurrently": "^7.6.0"
+    },
+    "engines": {
+        "node": ">=18"
     },
     "browserslist": {
         "production": [

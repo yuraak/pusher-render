@@ -130,30 +130,27 @@ const DGHDynamicMain = () => {
             setError(null);
             setIsValid(null);
             setResponse(null);
-
-            const response = await fetch('/proxy', {
+    
+            const proxyResponse = await fetch('/proxy', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    target: endpoint,
-                    data: formattedRequest,
-                })
+                body: JSON.stringify({ target: endpoint }),
             });
-
-            if (!response.ok) {
-                throw new Error('Failed to send request');
+    
+            if (!proxyResponse.ok) {
+                throw new Error('Proxy failed');
             }
-
-            const responseData = await response.json();
-            const valid = ajv.validate(dghResponseSchema, responseData);
-            setResponse(responseData);
+    
+            const res = await proxyResponse.json();
+            const valid = ajv.validate(dghResponseSchema, res);
+            setResponse(res);
             setIsValid(valid);
-
-            setHistory((prev) => [{ endpoint, request: formattedRequest, response: responseData, isValid: valid }, ...prev.slice(0, 9)]);
-            if (responseData.data && responseData.data.url) {
-                window.open(responseData.data.url, '_blank', 'width=800,height=600,noopener,noreferrer');
-            }
-
+    
+            setHistory((prev) => [
+                { endpoint, request: formattedRequest, response: res, isValid: valid },
+                ...prev.slice(0, 9),
+            ]);
+    
             setNextRequestId(uuidv4());
             updateRequestPreview();
         } catch (error) {
