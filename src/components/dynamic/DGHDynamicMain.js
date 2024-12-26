@@ -3,7 +3,7 @@ import { Container, Typography, TextField, Button, Alert, Paper, Box, Stack, Sel
 import { Link } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import Ajv from 'ajv';
-import HistoryWrapper from '../components/HistoryWrapper'; // Adjust path as needed
+import HistoryWrapper from '../HistoryWrapper'; // Adjust path as needed
 
 const ajv = new Ajv({ allErrors: true, verbose: true });
 const dghResponseSchema = {
