@@ -69,14 +69,8 @@ const DGHStaticMain = () => {
     }, [updateUrlPreview]);
 
     const handleOpenIframe = () => {
-        const iframe = document.createElement('iframe');
-        iframe.src = urlPreview;
-        iframe.style.width = '100%';
-        iframe.style.height = '600px';
-        iframe.style.border = 'none';
-        const iframeContainer = document.getElementById('iframe-container');
-        iframeContainer.innerHTML = '';
-        iframeContainer.appendChild(iframe);
+        const wrapperUrl = `/wrapper?url=${encodeURIComponent(urlPreview)}`;
+        window.open(wrapperUrl, '_blank', 'width=800,height=600,noopener,noreferrer');
         setHistory((prev) => [urlPreview, ...prev.slice(0, 9)]);
     };
 
