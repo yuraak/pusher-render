@@ -1,26 +1,23 @@
-# Dockerfile
-FROM node:14
+# Base image
+FROM node:16
 
+# Create app directory
 WORKDIR /app
 
-# Install dependencies
+# Install app dependencies
 COPY package*.json ./
 RUN npm install
+RUN npm install -g concurrently
 
-# Copy the source code
+# Copy app source code
 COPY . .
 
-# Build the React app for production
-RUN npm run build
+# Set environment variables
+ENV PORT=3000
 
-# Install `serve` to serve the static files
-RUN npm install -g serve
+# Expose application ports
+EXPOSE 3000
+EXPOSE 3001
 
-# Use the PORT environment variable provided by Render
-ENV PORT 10000
-
-# Expose the port
-EXPOSE 10000
-
-# Use `serve` to serve the production build
-CMD ["serve", "-s", "build", "-l", "10000"]
+# Command to run both proxy and frontend
+CMD ["concurrently", "\"node proxyServer.js\"", "\"npm start\""]

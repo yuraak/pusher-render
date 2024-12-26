@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import { Container, Typography, Button, Box } from '@mui/material';
 import DGHDynamicMain from './components/dynamic/DGHDynamicMain';
 import DGHStaticMain from './components/static/DGHStaticMain';
-import HistoryWrapper from './components/HistoryWrapper';
 
 const Home = () => (
     <Container>
@@ -45,7 +44,6 @@ const App = () => {
                 <Route path="/" element={<Home />} />
                 <Route path="/dynamic" element={<DGHDynamicMain />} />
                 <Route path="/static" element={<DGHStaticMain />} />
-                <Route path="/wrapper" element={<HistoryWrapper />} /> {/* Added the wrapper route */}
             </Routes>
         </Router>
     );

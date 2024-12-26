@@ -10,7 +10,7 @@ const DGHStaticMain = () => {
         gameId: false,
         gameCycleId: false,
         gameCycleFinishDateTime: false,
-        localeCode: false
+        localeCode: false,
     });
     const [parameterValues, setParameterValues] = useState({
         playerId: { name: '', value: '' },
@@ -18,7 +18,7 @@ const DGHStaticMain = () => {
         gameId: { name: '', value: '' },
         gameCycleId: { name: '', value: '' },
         gameCycleFinishDateTime: { name: '', value: '' },
-        localeCode: { name: '', value: '' }
+        localeCode: { name: '', value: '' },
     });
     const [urlPreview, setUrlPreview] = useState('');
     const [history, setHistory] = useState([]);
@@ -27,12 +27,14 @@ const DGHStaticMain = () => {
         document.title = 'DGH PUSHER / static'; // Set tab title
     }, []);
 
-    const handleBaseUrlChange = (e) => setBaseUrl(e.target.value);
+    const handleBaseUrlChange = (e) => {
+        setBaseUrl(e.target.value);
+    };
 
     const handleCheckboxChange = (e) => {
         setSelectedParameters({
             ...selectedParameters,
-            [e.target.name]: e.target.checked
+            [e.target.name]: e.target.checked,
         });
     };
 
@@ -41,40 +43,51 @@ const DGHStaticMain = () => {
             ...parameterValues,
             [key]: {
                 ...parameterValues[key],
-                [type]: e.target.value
-            }
+                [type]: e.target.value,
+            },
         });
     };
 
     const updateUrlPreview = useCallback(() => {
-        const [urlWithoutQuery, query] = baseUrl.split('?');
-        const existingParams = new URLSearchParams(query);
-        const params = new URLSearchParams(existingParams);
-
+        const params = new URLSearchParams();
         for (const key in selectedParameters) {
             if (selectedParameters[key]) {
                 const name = parameterValues[key].name || key;
                 const value = parameterValues[key].value || '';
-                params.set(name, value);
+                params.append(name, value);
             }
         }
-
-        const queryStringified = params.toString();
-        const finalUrl = queryStringified ? `${urlWithoutQuery}?${queryStringified}` : urlWithoutQuery;
-        setUrlPreview(finalUrl);
+        setUrlPreview(`${baseUrl}?${params.toString()}`);
     }, [baseUrl, selectedParameters, parameterValues]);
 
     useEffect(() => {
         updateUrlPreview();
     }, [updateUrlPreview]);
 
-    const handleOpenIframe = () => {
-        const wrapperUrl = `/wrapper?url=${encodeURIComponent(urlPreview)}`;
-        window.open(wrapperUrl, '_blank', 'width=800,height=600,noopener,noreferrer');
-        setHistory((prev) => [urlPreview, ...prev.slice(0, 9)]);
+    const handleOpenIframe = async () => {
+        try {
+            const response = await fetch('/proxy', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ target: urlPreview }),
+            });
+            if (response.ok) {
+                const html = await response.text();
+                const newWindow = window.open();
+                newWindow.document.write(html);
+                newWindow.document.close();
+                setHistory((prev) => [urlPreview, ...prev.slice(0, 9)]);
+            } else {
+                console.error('Failed to open URL');
+            }
+        } catch (error) {
+            console.error('Error opening URL:', error);
+        }
     };
 
-    const clearHistory = () => setHistory([]);
+    const clearHistory = () => {
+        setHistory([]);
+    };
 
     return (
         <Container>
@@ -111,47 +124,44 @@ const DGHStaticMain = () => {
                                 color="primary"
                             />
                         }
-                        label={param.replace(/([A-Z])/g, ' $1').trim()}  // Format label for readability
+                        label={param.replace(/([A-Z])/g, ' $1').trim()} // Format label for readability
                     />
                 ))}
             </Box>
             <Grid container spacing={2} style={{ marginBottom: '20px' }}>
-                {Object.keys(selectedParameters).map((key) => (
-                    selectedParameters[key] && (
-                        <React.Fragment key={key}>
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    label={`Parameter Name for ${key}`}
-                                    value={parameterValues[key].name}
-                                    onChange={(e) => handleParameterChange(e, key, 'name')}
-                                    variant="outlined"
-                                    fullWidth
-                                    style={{ marginBottom: '10px' }}
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    label={`Value for ${key}`}
-                                    value={parameterValues[key].value}
-                                    onChange={(e) => handleParameterChange(e, key, 'value')}
-                                    variant="outlined"
-                                    fullWidth
-                                    style={{ marginBottom: '10px' }}
-                                />
-                            </Grid>
-                        </React.Fragment>
-                    )
-                ))}
+                {Object.keys(selectedParameters).map(
+                    (key) =>
+                        selectedParameters[key] && (
+                            <React.Fragment key={key}>
+                                <Grid item xs={12} md={6}>
+                                    <TextField
+                                        label={`Parameter Name for ${key}`}
+                                        value={parameterValues[key].name}
+                                        onChange={(e) => handleParameterChange(e, key, 'name')}
+                                        variant="outlined"
+                                        fullWidth
+                                        style={{ marginBottom: '10px' }}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <TextField
+                                        label={`Value for ${key}`}
+                                        value={parameterValues[key].value}
+                                        onChange={(e) => handleParameterChange(e, key, 'value')}
+                                        variant="outlined"
+                                        fullWidth
+                                        style={{ marginBottom: '10px' }}
+                                    />
+                                </Grid>
+                            </React.Fragment>
+                        )
+                )}
             </Grid>
             <Paper elevation={3} style={{ padding: '20px', marginBottom: '20px', position: 'relative' }}>
-                <Box position="absolute" top="-8px" left="10px" bgcolor="white" px="5px">
-                    <Typography variant="subtitle1" style={{ fontWeight: 500, color: 'rgba(0, 0, 0, 0.6)' }}>
-                        URL Preview
-                    </Typography>
-                </Box>
-                <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
-                    {urlPreview}
-                </pre>
+                <Typography variant="subtitle1" style={{ marginBottom: '-10px', fontWeight: 500, color: 'rgba(0, 0, 0, 0.6)' }}>
+                    URL Preview
+                </Typography>
+                <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>{urlPreview}</pre>
             </Paper>
             <Stack direction="row" spacing={2}>
                 <Button variant="contained" color="primary" onClick={handleOpenIframe}>
@@ -166,17 +176,12 @@ const DGHStaticMain = () => {
             </Box>
             {history.map((url, index) => (
                 <Paper elevation={3} key={index} style={{ padding: '20px', marginTop: '20px', position: 'relative' }}>
-                    <Box position="absolute" top="-8px" left="10px" bgcolor="white" px="5px">
-                        <Typography variant="subtitle1" style={{ fontWeight: 500, color: 'rgba(0, 0, 0, 0.6)' }}>
-                            {index === 0 ? 'Latest' : `URL ${index + 1}`}
-                        </Typography>
-                    </Box>
-                    <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
-                        {url}
-                    </pre>
+                    <Typography variant="subtitle1" style={{ marginBottom: '-10px', fontWeight: 500, color: 'rgba(0, 0, 0, 0.6)' }}>
+                        {index === 0 ? 'Latest' : `URL ${index + 1}`}
+                    </Typography>
+                    <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>{url}</pre>
                 </Paper>
             ))}
-            <div id="iframe-container" style={{ marginTop: '20px' }}></div>
         </Container>
     );
 };

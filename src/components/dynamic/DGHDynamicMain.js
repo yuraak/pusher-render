@@ -3,7 +3,6 @@ import { Container, Typography, TextField, Button, Alert, Paper, Box, Stack, Sel
 import { Link } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import Ajv from 'ajv';
-import HistoryWrapper from '../HistoryWrapper'; // Adjust path as needed
 
 const ajv = new Ajv({ allErrors: true, verbose: true });
 const dghResponseSchema = {
@@ -34,8 +33,8 @@ const DGHDynamicMain = () => {
     const [isValid, setIsValid] = useState(null);
     const [history, setHistory] = useState([]);
     const [nextRequestId, setNextRequestId] = useState(uuidv4());
+
     const [inputMode, setInputMode] = useState('TPI v1'); // 'Manual', 'TPI v1', 'TPI v2'
-    const [iframeUrl, setIframeUrl] = useState('');
 
     // State for manual inputs
     const [manualInputs, setManualInputs] = useState({
@@ -132,25 +131,31 @@ const DGHDynamicMain = () => {
             setIsValid(null);
             setResponse(null);
 
-            const res = await fetch(endpoint, {
+            const response = await fetch('/proxy', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formattedRequest)
+                body: JSON.stringify({
+                    target: endpoint,
+                    data: formattedRequest,
+                })
             });
 
-            const responseData = await res.json();
+            if (!response.ok) {
+                throw new Error('Failed to send request');
+            }
+
+            const responseData = await response.json();
             const valid = ajv.validate(dghResponseSchema, responseData);
             setResponse(responseData);
             setIsValid(valid);
 
             setHistory((prev) => [{ endpoint, request: formattedRequest, response: responseData, isValid: valid }, ...prev.slice(0, 9)]);
+            if (responseData.data && responseData.data.url) {
+                window.open(responseData.data.url, '_blank', 'width=800,height=600,noopener,noreferrer');
+            }
 
             setNextRequestId(uuidv4());
             updateRequestPreview();
-
-            if (responseData.data && responseData.data.url) {
-                setIframeUrl(responseData.data.url); // Update iframe URL instead of opening new tab
-            }
         } catch (error) {
             setError(error.message || 'Request failed');
         }
@@ -176,7 +181,6 @@ const DGHDynamicMain = () => {
 
     return (
         <Container>
-            <HistoryWrapper iframeUrl={iframeUrl} onClose={() => setIframeUrl('')} />
             <Box display="flex" justifyContent="space-between" alignItems="center" marginBottom="20px">
                 <Typography variant="h4" gutterBottom>DGH Pusher / Dynamic Approach</Typography>
                 <Box>
