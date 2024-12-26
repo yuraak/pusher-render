@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Typography, TextField, Checkbox, FormControlLabel, Paper, Box, Button, Grid } from '@mui/material';
+import { Stack, Container, Typography, TextField, Checkbox, FormControlLabel, Paper, Box, Button, Grid } from '@mui/material';
 import { Link } from 'react-router-dom';
 import queryString from 'query-string';
 
