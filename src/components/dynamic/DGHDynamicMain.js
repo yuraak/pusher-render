@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Container, Typography, TextField, Button, Alert, Paper, Box, Stack, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import Ajv from 'ajv';
+import IframeWrapper from '../components/IframeWrapper'; // Adjust path as needed
 
 const ajv = new Ajv({ allErrors: true, verbose: true });
 const dghResponseSchema = {
@@ -35,7 +35,8 @@ const DGHDynamicMain = () => {
     const [history, setHistory] = useState([]);
     const [nextRequestId, setNextRequestId] = useState(uuidv4());
     const [inputMode, setInputMode] = useState('TPI v1'); // 'Manual', 'TPI v1', 'TPI v2'
-    
+    const [iframeUrl, setIframeUrl] = useState('');
+
     // State for manual inputs
     const [manualInputs, setManualInputs] = useState({
         gsId: '',
@@ -84,7 +85,6 @@ const DGHDynamicMain = () => {
     const updateRequestPreview = useCallback(() => {
         try {
             if (inputMode === 'Manual') {
-                // Create request from manual inputs
                 setFormattedRequest({
                     gsId: manualInputs.gsId,
                     gpId: "pop",
@@ -132,23 +132,27 @@ const DGHDynamicMain = () => {
             setIsValid(null);
             setResponse(null);
 
-            const res = await axios.post(endpoint, formattedRequest);
+            const res = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formattedRequest)
+            });
 
-            const valid = ajv.validate(dghResponseSchema, res.data);
-            setResponse(res.data);
+            const responseData = await res.json();
+            const valid = ajv.validate(dghResponseSchema, responseData);
+            setResponse(responseData);
             setIsValid(valid);
 
-            setHistory(prev => [{ endpoint, request: formattedRequest, response: res.data, isValid: valid }, ...prev.slice(0, 9)]);
+            setHistory((prev) => [{ endpoint, request: formattedRequest, response: responseData, isValid: valid }, ...prev.slice(0, 9)]);
 
             setNextRequestId(uuidv4());
             updateRequestPreview();
 
-            if (res.data.data && res.data.data.url) {
-                window.open(res.data.data.url, '_blank', 'width=800,height=600,noopener,noreferrer');
+            if (responseData.data && responseData.data.url) {
+                setIframeUrl(responseData.data.url); // Update iframe URL instead of opening new tab
             }
-
         } catch (error) {
-            setError(error.response ? error.response.data : 'Request failed');
+            setError(error.message || 'Request failed');
         }
     };
 
@@ -170,20 +174,9 @@ const DGHDynamicMain = () => {
         });
     };
 
-    const reopenIframe = () => {
-        if (response && response.data && response.data.url) {
-            window.open(response.data.url, '_blank', 'width=800,height=600,noopener,noreferrer');
-        }
-    };
-
-    const renderTitle = (text) => (
-        <Typography variant="subtitle1" style={{ marginBottom: '-10px', fontWeight: 500, color: 'rgba(0, 0, 0, 0.6)' }}>
-            {text}
-        </Typography>
-    );
-
     return (
         <Container>
+            <IframeWrapper iframeUrl={iframeUrl} onClose={() => setIframeUrl('')} />
             <Box display="flex" justifyContent="space-between" alignItems="center" marginBottom="20px">
                 <Typography variant="h4" gutterBottom>DGH Pusher / Dynamic Approach</Typography>
                 <Box>
@@ -291,9 +284,9 @@ const DGHDynamicMain = () => {
                 style={{ marginBottom: '20px' }}
             />
             <Paper elevation={3} style={{ padding: '20px', marginBottom: '20px', position: 'relative' }}>
-                <Box position="absolute" top="-8px" left="10px" bgcolor="white" px="5px">
-                    {renderTitle('Request Preview')}
-                </Box>
+                <Typography variant="subtitle1" style={{ marginBottom: '-10px', fontWeight: 500, color: 'rgba(0, 0, 0, 0.6)' }}>
+                    Request Preview
+                </Typography>
                 <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
                     {JSON.stringify({ method: 'POST', url: endpoint, headers: { "Content-Type": "application/json" }, data: formattedRequest }, null, 2)}
                 </pre>
@@ -301,9 +294,6 @@ const DGHDynamicMain = () => {
             <Stack direction="row" spacing={2}>
                 <Button variant="contained" color="primary" onClick={sendRequest}>
                     Send
-                </Button>
-                <Button variant="outlined" color="primary" onClick={reopenIframe}>
-                    Re-open Iframe
                 </Button>
             </Stack>
             {error && (
@@ -313,9 +303,9 @@ const DGHDynamicMain = () => {
             )}
             {response && (
                 <Paper elevation={3} style={{ padding: '20px', marginTop: '20px', position: 'relative' }}>
-                    <Box position="absolute" top="-8px" left="10px" bgcolor="white" px="5px">
-                        {renderTitle('Response')}
-                    </Box>
+                    <Typography variant="subtitle1" style={{ marginBottom: '-10px', fontWeight: 500, color: 'rgba(0, 0, 0, 0.6)' }}>
+                        Response
+                    </Typography>
                     <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
                         {JSON.stringify(response, null, 2)}
                     </pre>
@@ -334,24 +324,18 @@ const DGHDynamicMain = () => {
             </Box>
             {history.map((entry, index) => (
                 <Paper elevation={3} key={index} style={{ padding: '20px', marginTop: '20px', position: 'relative' }}>
-                    <Box position="absolute" top="-8px" left="10px" bgcolor="white" px="5px">
-                        {renderTitle(index === 0 ? 'Latest' : `Push ${index + 1}`)}
-                    </Box>
-                    <Typography variant="subtitle1" style={{ marginTop: '10px', fontWeight: 500 }}>Endpoint:</Typography>
-                    <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>{entry.endpoint}</pre>
-                    <Typography variant="subtitle1" style={{ marginTop: '10px', fontWeight: 500 }}>Request:</Typography>
-                    <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word', backgroundColor: '#f5f5f5', padding: '10px', borderRadius: '5px' }}>
+                    <Typography variant="subtitle1" style={{ marginBottom: '-10px', fontWeight: 500, color: 'rgba(0, 0, 0, 0.6)' }}>
+                        {index === 0 ? 'Latest' : `Push ${index + 1}`}
+                    </Typography>
+                    <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
                         {JSON.stringify(entry.request, null, 2)}
                     </pre>
-                    <Typography variant="subtitle1" style={{ marginTop: '10px', fontWeight: 500 }}>Response:</Typography>
-                    <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word', backgroundColor: '#f5f5f5', padding: '10px', borderRadius: '5px' }}>
-                        {JSON.stringify(entry.response, null, 2)}
+                    <Typography variant="subtitle1" style={{ marginBottom: '-10px', fontWeight: 500, color: 'rgba(0, 0, 0, 0.6)' }}>
+                        Endpoint:
+                    </Typography>
+                    <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
+                        {entry.endpoint}
                     </pre>
-                    {entry.isValid ? (
-                        <Alert severity="success">JSON Validation: Passed</Alert>
-                    ) : (
-                        <Alert severity="error">JSON Validation: Failed</Alert>
-                    )}
                 </Paper>
             ))}
         </Container>
