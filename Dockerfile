@@ -6,18 +6,16 @@ WORKDIR /app
 
 # Install app dependencies
 COPY package*.json ./
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 # Copy app source code
 COPY . .
 
 # Set environment variables
 ENV PORT=3000
-ENV PROXY_PORT=5000
 
-# Expose application ports
+# Expose the frontend port
 EXPOSE 3000
-EXPOSE 5000
 
-# Command to run both proxy and frontend
+# Command to run the React app
 CMD ["npm", "start"]
