@@ -14,20 +14,20 @@ const Home = () => (
                 Choose your approach:
             </Typography>
             <Box mt={4}>
-                <Button 
-                    component={Link} 
-                    to="/dynamic" 
-                    variant="contained" 
-                    color="primary" 
+                <Button
+                    component={Link}
+                    to="/dynamic"
+                    variant="contained"
+                    color="primary"
                     style={{ margin: '10px' }}
                 >
                     Dynamic Approach
                 </Button>
-                <Button 
-                    component={Link} 
-                    to="/static" 
-                    variant="contained" 
-                    color="secondary" 
+                <Button
+                    component={Link}
+                    to="/static"
+                    variant="contained"
+                    color="secondary"
                     style={{ margin: '10px' }}
                 >
                     Static Approach

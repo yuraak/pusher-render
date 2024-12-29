@@ -1,6 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Container, Typography, TextField, Checkbox, FormControlLabel, Paper, Box, Stack, Button, Grid } from '@mui/material';
+import {
+    Container,
+    Typography,
+    TextField,
+    Checkbox,
+    FormControlLabel,
+    Paper,
+    Box,
+    Stack,
+    Button,
+    Grid,
+} from '@mui/material';
 import { Link } from 'react-router-dom';
+import queryString from 'query-string';
 
 const DGHStaticMain = () => {
     const [baseUrl, setBaseUrl] = useState('');
@@ -49,15 +61,21 @@ const DGHStaticMain = () => {
     };
 
     const updateUrlPreview = useCallback(() => {
-        const params = new URLSearchParams();
+        const [urlWithoutQuery, query] = baseUrl.split('?');
+        const existingParams = queryString.parse(query);
+        const params = { ...existingParams };
+
         for (const key in selectedParameters) {
             if (selectedParameters[key]) {
                 const name = parameterValues[key].name || key;
                 const value = parameterValues[key].value || '';
-                params.append(name, value);
+                params[name] = value;
             }
         }
-        setUrlPreview(`${baseUrl}?${params.toString()}`);
+
+        const queryStringified = queryString.stringify(params);
+        const finalUrl = queryStringified ? `${urlWithoutQuery}?${queryStringified}` : urlWithoutQuery;
+        setUrlPreview(finalUrl);
     }, [baseUrl, selectedParameters, parameterValues]);
 
     useEffect(() => {
@@ -66,22 +84,23 @@ const DGHStaticMain = () => {
 
     const handleOpenIframe = async () => {
         try {
-            const response = await fetch('/proxy', {
+            const proxyResponse = await fetch('/proxy', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ target: urlPreview }),
             });
-            if (response.ok) {
-                const html = await response.text();
-                const newWindow = window.open();
-                newWindow.document.write(html);
-                newWindow.document.close();
+
+            if (!proxyResponse.ok) {
+                throw new Error('Failed to open URL through proxy');
+            }
+
+            const response = await proxyResponse.json();
+            if (response && response.url) {
+                window.open(response.url, '_blank', 'width=800,height=600,noopener,noreferrer');
                 setHistory((prev) => [urlPreview, ...prev.slice(0, 9)]);
-            } else {
-                console.error('Failed to open URL');
             }
         } catch (error) {
-            console.error('Error opening URL:', error);
+            console.error('Error opening URL:', error.message);
         }
     };
 
@@ -92,9 +111,17 @@ const DGHStaticMain = () => {
     return (
         <Container>
             <Box display="flex" justifyContent="space-between" alignItems="center" marginBottom="20px">
-                <Typography variant="h4" gutterBottom>DGH Pusher / Static Approach</Typography>
+                <Typography variant="h4" gutterBottom>
+                    DGH Pusher / Static Approach
+                </Typography>
                 <Box>
-                    <Button component={Link} to="/dynamic" variant="outlined" color="primary" style={{ marginRight: '10px' }}>
+                    <Button
+                        component={Link}
+                        to="/dynamic"
+                        variant="outlined"
+                        color="primary"
+                        style={{ marginRight: '10px' }}
+                    >
                         Dynamic Approach
                     </Button>
                     <Button component={Link} to="/" variant="outlined" color="secondary">
@@ -158,27 +185,59 @@ const DGHStaticMain = () => {
                 )}
             </Grid>
             <Paper elevation={3} style={{ padding: '20px', marginBottom: '20px', position: 'relative' }}>
-                <Typography variant="subtitle1" style={{ marginBottom: '-10px', fontWeight: 500, color: 'rgba(0, 0, 0, 0.6)' }}>
-                    URL Preview
-                </Typography>
+                <Box position="absolute" top="-8px" left="10px" bgcolor="white" px="5px">
+                    <Typography
+                        variant="subtitle1"
+                        style={{
+                            fontWeight: 500,
+                            color: 'rgba(0, 0, 0, 0.6)',
+                        }}
+                    >
+                        URL Preview
+                    </Typography>
+                </Box>
                 <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>{urlPreview}</pre>
             </Paper>
             <Stack direction="row" spacing={2}>
                 <Button variant="contained" color="primary" onClick={handleOpenIframe}>
-                    Open URL in Iframe
+                    Open URL
                 </Button>
             </Stack>
             <Box display="flex" alignItems="center" marginTop="40px">
-                <Typography variant="h5" gutterBottom>History</Typography>
+                <Typography variant="h5" gutterBottom>
+                    History
+                </Typography>
                 <Button variant="outlined" color="secondary" onClick={clearHistory} style={{ marginLeft: '10px' }}>
                     Clear History
                 </Button>
             </Box>
             {history.map((url, index) => (
-                <Paper elevation={3} key={index} style={{ padding: '20px', marginTop: '20px', position: 'relative' }}>
-                    <Typography variant="subtitle1" style={{ marginBottom: '-10px', fontWeight: 500, color: 'rgba(0, 0, 0, 0.6)' }}>
-                        {index === 0 ? 'Latest' : `URL ${index + 1}`}
-                    </Typography>
+                <Paper
+                    elevation={3}
+                    key={index}
+                    style={{
+                        padding: '20px',
+                        marginTop: '20px',
+                        position: 'relative',
+                    }}
+                >
+                    <Box
+                        position="absolute"
+                        top="-8px"
+                        left="10px"
+                        bgcolor="white"
+                        px="5px"
+                    >
+                        <Typography
+                            variant="subtitle1"
+                            style={{
+                                fontWeight: 500,
+                                color: 'rgba(0, 0, 0, 0.6)',
+                            }}
+                        >
+                            {index === 0 ? 'Latest' : `URL ${index + 1}`}
+                        </Typography>
+                    </Box>
                     <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>{url}</pre>
                 </Paper>
             ))}
